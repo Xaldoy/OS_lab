@@ -112,6 +112,6 @@ int main()
                                 }
                         } while (pid_zavrsio <= 0);
                 }
-        } while (strncmp(budder, "exit", 4) != 0);
+        } while (strncmp(buffer, "exit", 4) != 0);
         return 0;
 }
