@@ -10,13 +10,25 @@
 
 #define MAXARGS 10
 
-int main() {
+class Proces
+{
+public:
+	pid_t pid;
+	std::string naziv;
+	Proces(pid_t pid, std::string &naziv) : pid(pid), naziv(naziv) {}
+}
+
+int
+main()
+{
 
 	size_t vel_buf = 128;
 	char buffer[vel_buf];
+	std::list<Proces> still_running;
+
 	do
 	{
-		if(fgets(buffer, vel_buf, stdin) != NULL)
+		if (fgets(buffer, vel_buf, stdin) != NULL)
 		{
 			char *argv[MAXARGS];
 			int argc = 0;
@@ -27,9 +39,24 @@ int main() {
 				argv[argc] = strtok(NULL, " \t\n");
 			}
 
-			if(strcmp(argv[0], "cd") == 0)
+			if (strcmp(argv[0], "cd") == 0 && argc == 2)
 			{
-				std::cout << "Changing directory" << std::endl;
+				chdir(argv[1]);
+				std::cout << "Changed to: " << getcwd() << std::endl;
+			}
+
+			if (strcmp(argv[0], "ps") == 0 && argc == 1)
+			{
+				std::cout << "PID\time" << std::endl;
+				foreach (Proces &proces : still_running)
+				{
+					std::cout << proces.pid << "\t" << proces.name << std::endl;
+				}
+			}
+
+			if (strcmp(argv[0], "kill" == 0) && argc == 2)
+			{
+				std::cout << "killing " << argv[1] << std::endl;
 			}
 		}
 	} while (strncmp(buffer, "exit", 4) != 0);
