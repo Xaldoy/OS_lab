@@ -7,7 +7,7 @@
 #include <string.h>
 #include <termios.h>
 
-#define MAXARGS 5;
+#define MAXARGS 5
 
 struct sigaction prije;
 
