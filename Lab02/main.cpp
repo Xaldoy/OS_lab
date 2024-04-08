@@ -33,7 +33,7 @@ pid_t pokreni_program(char *naredba[], int u_pozadini)
                 sigaction(SIGINT, &prije, NULL);
                 setpgid(pid_novi, pid_novi);
                 if (!u_pozadini)
-                        tscetpgrp(STDIN_FILENO, getpid(pid_novi));
+                        tcsetpgrp(STDIN_FILENO, getpid(pid_novi));
                 execvp(naredba[0], naredba);
                 perror("Nisam pokrenuo program!");
                 exit(1);
@@ -64,7 +64,7 @@ int main()
         pid_novi = pokreni_program(naredba_echo, 0);
         waitpid(pid_novi, NULL, 0);
 
-        tscetpgrp(STDIN_FILENO, getpid(0));
+        tcsetpgrp(STDIN_FILENO, getpid(0));
 
         size_t vel_buf = 128;
         char buffer[vel_buf];
