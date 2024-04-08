@@ -104,11 +104,11 @@ int main()
                                         {
                                                 pid_novi = (pid_t)0;
                                         }
-                                        else
-                                        {
-                                                printf("[roditelj] waitpid gotov ali ne daje informaciju\n");
-                                                break;
-                                        }
+                                }
+                                else
+                                {
+                                        printf("[roditelj] waitpid gotov ali ne daje informaciju\n");
+                                        break;
                                 }
                         } while (pid_zavrsio <= 0);
                 }
