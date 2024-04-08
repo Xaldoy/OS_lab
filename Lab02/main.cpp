@@ -53,7 +53,7 @@ int main()
         act.sa_flags = 0;
         sigaction(SIGINT, &act, &prije);
         act.sa_handler = obradi_signal_zavrsio_neki_proces_dijete;
-        sigaction(SIGCHLD, &act, &prije);
+        sigaction(SIGCHLD, &act, NULL);
         act.sa_handler = SIG_IGN;
         sigaction(SIGTTOU, &act, NULL);
 
@@ -111,9 +111,6 @@ int main()
                                         }
                                 }
                         } while (pid_zavrsio <= 0);
-                }
-                else
-                {
                 }
         } while (strncmp(budder, "exit", 4) != 0);
         return 0;
