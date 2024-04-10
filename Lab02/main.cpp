@@ -42,10 +42,14 @@ void ukloni_proces_iz_running(pid_t pid_zavrsio)
 		if (it->pid == pid_zavrsio)
 		{
 			still_running.erase(it);
-			std::cout << "Proces with PID: " << it->pid << " ended." << std::endl;
 			break;
 		}
 	}
+}
+
+void obradi_dogadjaj(int sig) {
+	pid_t pid = getpid();
+	printf("\n[signal SIGINT] proces %d primio signal %d\n", (int)pid, sig);
 }
 
 void obradi_signal_zavrsio_neki_proces_dijete(int id)
@@ -55,7 +59,7 @@ void obradi_signal_zavrsio_neki_proces_dijete(int id)
 		if (kill(pid_zavrsio, 0) == -1)
 		{
 			ukloni_proces_iz_running(pid_zavrsio);
-			printf("\n[roditelj %d - SIGCHLD + waitpid] dijete %d zavrsilo s radom\n", (int)getpid(), pid_zavrsio);
+			printf("[roditelj %d] dijete %d zavrsilo s radom\n", (int)getpid(), pid_zavrsio);
 		}
 }
 
@@ -64,6 +68,7 @@ pid_t pokreni_program(char *naredba[], int u_pozadini)
 	pid_t pid_novi;
 	if ((pid_novi = fork()) == 0)
 	{
+		printf("[dijete %d] krenuo s radom\n", (int)getpid());
 		sigaction(SIGINT, &prije, NULL);
 		setpgid(pid_novi, pid_novi);
 		if (!u_pozadini)
@@ -96,9 +101,13 @@ int main()
 	char buffer[vel_buf];
 	pid_t pid_novi;
 
+	printf("[roditelj %d] krenuo s radom\n", (int)getpid());
+
+	act.sa_handler = obradi_dogadjaj;
 	sigemptyset(&act.sa_mask);
-	act.sa_handler = obradi_signal_zavrsio_neki_proces_dijete;
 	act.sa_flags = 0;
+	sigaction(SIGINT, &act, &prije);
+	act.sa_handler = obradi_signal_zavrsio_neki_proces_dijete;
 	sigaction(SIGCHLD, &act, NULL);
 	act.sa_handler = SIG_IGN;
 	sigaction(SIGTTOU, &act, NULL);
@@ -120,14 +129,12 @@ int main()
 			{
 
 				char *value = strtok(NULL, " \t\n");
-				;
 				if (value != NULL)
 				{
 
 					std::string s_value(value);
 					if (s_value == "&")
 					{
-						std::cout << "Will run in bg" << std::endl;
 						background = 1;
 						continue;
 					}
@@ -136,35 +143,50 @@ int main()
 				argv[argc] = value;
 			}
 
-			std::cout << argc << std::endl;
-
-			if (strcmp(argv[0], "pwd") == 0)
+			if (strcmp(argv[0], "pwd") == 0 && argc == 1)
 			{
 				std::cout << cwd() << std::endl;
 			}
 
-			else if (strcmp(argv[0], "cd") == 0)
+			else if (strcmp(argv[0], "cd") == 0 && argc == 2)
 			{
 				chdir(argv[1]);
-				std::cout << "Changed to " << cwd() << std::endl;
+				std::cout << "cwd:  " << cwd() << std::endl;
 			}
 
-			else if (strcmp(argv[0], "ps") == 0)
+			else if (strcmp(argv[0], "ps") == 0 && argc == 1)
 			{
-				std::cout << "PID\time" << std::endl;
-				for (auto &proces : still_running)
+				if (still_running.size() > 0)
 				{
-					std::cout << proces.pid << "\t" << proces.name << std::endl;
+					std::cout << "PID\time" << std::endl;
+					for (auto &proces : still_running)
+					{
+						std::cout << proces.pid << "\t" << proces.name << std::endl;
+					}
 				}
 			}
 
-			else if (strcmp(argv[0], "kill") == 0)
+			else if (strcmp(argv[0], "kill") == 0 && argc == 3)
 			{
 				pid_t pid = std::stoi(argv[1]);
 				if (is_running(pid))
+				{
 					kill(pid, std::stoi(argv[2]));
-				else std::cout << "Can't kill that." << std::endl;
+				}
+				else
+					std::cout << "Proces s PID-om " << pid << " nije pokrenut od strane ove ljuske." << std::endl;
 			}
+
+			else if (strcmp(argv[0], "exit") == 0 && argc == 1)
+			{
+				for (auto &proces : still_running)
+				{
+					printf("[roditelj %d] dijete %d zavrsilo s radom\n", (int)getpid(), proces.pid);
+					kill(proces.pid, SIGINT);
+				}
+				break;
+			}
+
 			else
 			{
 				pid_novi = pokreni_program(argv, background);
@@ -182,6 +204,7 @@ int main()
 							{
 								tcsetpgrp(STDIN_FILENO, getpgid(0));
 								tcsetattr(STDIN_FILENO, 0, &shell_term_settings);
+								printf("[roditelj %d] dijete %d zavrsilo s radom\n", (int)getpid(), pid_zavrsio);
 								ukloni_proces_iz_running(pid_zavrsio);
 							}
 							else
@@ -198,4 +221,5 @@ int main()
 			}
 		}
 	} while (strncmp(buffer, "exit", 4) != 0);
+	return 0;
 }
