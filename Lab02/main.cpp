@@ -47,7 +47,8 @@ void ukloni_proces_iz_running(pid_t pid_zavrsio)
 	}
 }
 
-void obradi_dogadjaj(int sig) {
+void obradi_dogadjaj(int sig)
+{
 	pid_t pid = getpid();
 	printf("\n[signal SIGINT] proces %d primio signal %d\n", (int)pid, sig);
 }
@@ -179,11 +180,6 @@ int main()
 
 			else if (strcmp(argv[0], "exit") == 0 && argc == 1)
 			{
-				for (auto &proces : still_running)
-				{
-					printf("[roditelj %d] dijete %d zavrsilo s radom\n", (int)getpid(), proces.pid);
-					kill(proces.pid, SIGINT);
-				}
 				break;
 			}
 
@@ -221,5 +217,11 @@ int main()
 			}
 		}
 	} while (strncmp(buffer, "exit", 4) != 0);
+	for (auto &proces : still_running)
+	{
+		printf("[roditelj %d] dijete %d zavrsilo s radom\n", (int)getpid(), proces.pid);
+		kill(proces.pid, SIGINT);
+	}
+
 	return 0;
 }
