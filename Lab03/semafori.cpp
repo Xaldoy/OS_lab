@@ -19,7 +19,8 @@ public:
         this->last = 0;
         this->count = 0;
         this->ms.resize(size);
-        for(auto &d: ms) {
+        for (auto &d : ms)
+        {
             d = '-';
         }
     }
@@ -63,13 +64,14 @@ std::list<Meduspremnik> ums;
 std::list<Meduspremnik> ims;
 time_t start;
 
-double getTimePassed() {
+double get_time_passed()
+{
     return difftime(time(0), start);
 }
 
-void print_ms()
+void print_info()
 {
-    double time = getTimePassed();
+    double time = get_time_passed();
     std::cout << "t=" << time << "\t";
     std::cout << "UMS[]: ";
     for (auto ms : ums)
@@ -107,7 +109,7 @@ int obradi_ulaz(int I, char U)
 
 char obradi(char P, int &t)
 {
-    int sleep_time = rand() % 5 + 2;
+    int sleep_time = rand() % 2 + 2;
     sleep(sleep_time);
     t = rand() % bid;
     return P + ('A' - 'a');
@@ -118,8 +120,7 @@ void *ulazna_dretva(void *I)
     int id = *((int *)I);
     while (1)
     {
-
-        int sleep_time = rand() % 5 + 1;
+        int sleep_time = rand() % 2 + 1;
         sleep(sleep_time);
 
         char U = dohvati_ulaz(id);
@@ -132,27 +133,22 @@ void *ulazna_dretva(void *I)
         std::advance(it_ums_bsem, T);
 
         sem_wait(*it_ums_bsem);
-
-        // KO
         auto ums_it = ums.begin();
         std::advance(ums_it, T);
         ums_it->insert(U);
-
+        sem_post(*it_ums_osem);
         sem_post(*it_ums_bsem);
 
         sem_wait(ispis_semafor);
-
-        std::cout << "t=" << getTimePassed() << "\tU" << id
+        std::cout << "t=" << get_time_passed() << "\tU" << id
                   << ": dohvati_ulaz(" << id << ")->"
                   << U << "; obradi_ulaz(" << U << ")->"
                   << T << "; " << T << "-> UMS[" << T << "]"
                   << std::endl;
-        print_ms();
         // KO
+        print_info();
         sem_post(ispis_semafor);
         // Postavi semafore
-        sem_post(*it_ums_bsem);
-        sem_post(*it_ums_osem);
     }
     return nullptr;
 }
@@ -162,8 +158,6 @@ void *radna_dretva(void *I)
     int id = *((int *)I);
     while (1)
     {
-        auto it_ims_bsem = ims_bsem_semafori.begin();
-        std::advance(it_ims_bsem, id);
         auto it_ums_osem = ums_osem_semafori.begin();
         std::advance(it_ums_osem, id);
         auto it_ums_bsem = ums_bsem_semafori.begin();
@@ -179,18 +173,20 @@ void *radna_dretva(void *I)
         int t;
         char R = obradi(P, t);
 
+        auto it_ims_bsem = ims_bsem_semafori.begin();
+        std::advance(it_ims_bsem, t);
         sem_wait(*it_ims_bsem);
         auto ims_it = ims.begin();
         std::advance(ims_it, t);
         ims_it->insert(R);
         sem_post(*it_ims_bsem);
-    
+
         sem_wait(ispis_semafor);
-                std::cout << "t=" << getTimePassed() << "\tR" << id
+        std::cout << "t=" << get_time_passed() << "\tR" << id
                   << ": uzimam iz UMS[" << id << "]->"
                   << P << " i obradujem->" << R
                   << std::endl;
-        print_ms();
+        print_info();
         sem_post(ispis_semafor);
     }
 }
@@ -215,6 +211,11 @@ void *izlazna_dretva(void *I)
 
         // KO
         sem_post(*it_access);
+
+        sem_wait(ispis_semafor);
+        std::cout << "I" << id << ": čitam podatak " << K << " iz IMS[" << id << "]" << std::endl
+                  << std::endl;
+        sem_post(ispis_semafor);
     }
 }
 
